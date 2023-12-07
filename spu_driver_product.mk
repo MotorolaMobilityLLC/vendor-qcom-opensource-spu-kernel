@@ -1,3 +1,4 @@
+ifneq ($(BOARD_DISABLE_SPU),true)
 SPU_DLKM_ENABLE := true
 ifeq ($(TARGET_KERNEL_DLKM_DISABLE), true)
 	ifeq ($(TARGET_KERNEL_DLKM_SPU_OVERRIDE), false)
@@ -9,3 +10,4 @@ ifeq ($(SPU_DLKM_ENABLE),  true)
 	PRODUCT_PACKAGES += $(KERNEL_MODULES_OUT)/spcom.ko \
 		$(KERNEL_MODULES_OUT)/spss_utils.ko
 endif
+endif  # BOARD_DISABLE_SPU != true
