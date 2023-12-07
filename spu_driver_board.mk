@@ -1,3 +1,4 @@
+ifneq ($(BOARD_DISABLE_SPU),true)
 SPU_DLKM_ENABLE := true
 ifeq ($(TARGET_KERNEL_DLKM_DISABLE), true)
 	ifeq ($(TARGET_KERNEL_DLKM_SPU_OVERRIDE), false)
@@ -13,3 +14,4 @@ ifeq ($(SPU_DLKM_ENABLE),  true)
 		endif
 	endif
 endif
+endif  # BOARD_DISABLE_SPU != true
