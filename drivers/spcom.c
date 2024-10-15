@@ -3950,7 +3950,11 @@ fail_while_chardev_reg:
 	return -ENODEV;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0))
+static void spcom_remove(struct platform_device *pdev)
+#else
 static int spcom_remove(struct platform_device *pdev)
+#endif
 {
 	int ret;
 	struct rx_buff_list *rx_item;
@@ -3974,7 +3978,9 @@ static int spcom_remove(struct platform_device *pdev)
 		if (ret) {
 			spcom_pr_err("failed to destroy chardev [%s], ret [%d]\n",
 			       name, ret);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
 			return -EFAULT;
+#endif
 		}
 		spcom_pr_dbg("destroyed channel %s", name);
 	}
@@ -4007,7 +4013,9 @@ static int spcom_remove(struct platform_device *pdev)
 	spcom_dev = NULL;
 	pr_info("successfully released all module resources\n");
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
 	return 0;
+#endif
 }
 
 static void spcom_release_all_channels_of_process(u32 pid)

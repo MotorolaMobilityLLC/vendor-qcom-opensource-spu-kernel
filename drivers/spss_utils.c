@@ -36,6 +36,7 @@
 #include <linux/uaccess.h>  /* copy_from_user() */
 #include <linux/completion.h>	/* wait_for_completion_timeout() */
 #include <linux/reboot.h>	/* kernel_restart() */
+#include <linux/version.h>	/* KERNEL_VERSION and LINUX_VERSION_CODE */
 
 #include <linux/remoteproc.h>
 #include <linux/remoteproc/qcom_rproc.h>
@@ -1284,7 +1285,11 @@ static int spss_probe(struct platform_device *pdev)
 	return 0;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 10, 0))
+static void spss_remove(struct platform_device *pdev)
+#else
 static int spss_remove(struct platform_device *pdev)
+#endif
 {
 	spss_utils_destroy_chardev();
 	spss_destroy_sysfs(spss_dev);
@@ -1302,8 +1307,9 @@ static int spss_remove(struct platform_device *pdev)
 		iounmap(cmac_mem);
 		cmac_mem = NULL;
 	}
-
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(6, 10, 0))
 	return 0;
+#endif
 }
 
 static const struct of_device_id spss_match_table[] = {
