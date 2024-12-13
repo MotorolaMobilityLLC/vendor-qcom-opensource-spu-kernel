@@ -56,11 +56,19 @@ def spu_driver_module_entry(hdrs = []):
 
 def define_target_variant_modules(target, variant, registry, modules, config_options = []):
     kernel_build = "{}_{}".format(target, variant)
-    kernel_build_label = "//soc-repo:{}_base_kernel".format(kernel_build)
+
+    headers = select({
+        "//build/kernel/kleaf:socrepo_true": ["//soc-repo:all_headers"],
+        "//build/kernel/kleaf:socrepo_false": ["//msm-kernel:all_headers"],
+    })
+    kernel_build_label = select({
+        "//build/kernel/kleaf:socrepo_true": "//soc-repo:{}_base_kernel".format(kernel_build),
+        "//build/kernel/kleaf:socrepo_false": "//msm-kernel:{}".format(kernel_build),
+    })
+
     modules = [registry.get(module_name) for module_name in modules]
     options = _get_kernel_build_options(modules, config_options)
     formatter = lambda strs : [s.replace("%b", kernel_build).replace("%t", target) for s in strs]
-    headers = ["//soc-repo:all_headers"] + registry.hdrs
     all_module_rules = []
 
     for module in modules:
@@ -69,10 +77,10 @@ def define_target_variant_modules(target, variant, registry, modules, config_opt
 
         ddk_module(
             name = rule_name,
-            kernel_build = "//soc-repo:{}_base_kernel".format(kernel_build),
+            kernel_build = kernel_build_label,
             srcs = srcs,
             out = "{}.ko".format(module.name),
-            deps = headers + formatter(module.deps),
+            deps = headers + formatter(module.deps) + registry.hdrs,
             local_defines = options.keys()
         )
 
