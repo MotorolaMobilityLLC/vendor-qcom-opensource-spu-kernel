@@ -1,7 +1,6 @@
 load("//build/kernel/kleaf:kernel.bzl", "kernel_module",
                                         "kernel_modules_install",
-                                        "ddk_module",
-                                        "ddk_submodule")
+                                        "ddk_module")
 load("//build/bazel_common_rules/dist:dist.bzl", "copy_to_dist_dir")
 
 def _register_module_to_map(module_map, name, path, config_option, srcs, config_srcs, deps):
@@ -57,42 +56,45 @@ def spu_driver_module_entry(hdrs = []):
 
 def define_target_variant_modules(target, variant, registry, modules, config_options = []):
     kernel_build = "{}_{}".format(target, variant)
-    kernel_build_label = "//msm-kernel:{}".format(kernel_build)
+
+    headers = select({
+        "//build/kernel/kleaf:socrepo_true": ["//soc-repo:all_headers"],
+        "//build/kernel/kleaf:socrepo_false": ["//msm-kernel:all_headers"],
+    })
+    kernel_build_label = select({
+        "//build/kernel/kleaf:socrepo_true": "//soc-repo:{}_base_kernel".format(kernel_build),
+        "//build/kernel/kleaf:socrepo_false": "//msm-kernel:{}".format(kernel_build),
+    })
+
     modules = [registry.get(module_name) for module_name in modules]
     options = _get_kernel_build_options(modules, config_options)
     formatter = lambda strs : [s.replace("%b", kernel_build).replace("%t", target) for s in strs]
-    headers = ["//msm-kernel:all_headers"] + registry.hdrs
     all_module_rules = []
 
     for module in modules:
         rule_name = "{}_{}".format(kernel_build, module.name)
         srcs = _get_kernel_build_module_srcs(kernel_build, module, formatter)
 
-        ddk_submodule(
+        ddk_module(
             name = rule_name,
+            kernel_build = kernel_build_label,
             srcs = srcs,
             out = "{}.ko".format(module.name),
-            deps = headers + formatter(module.deps),
+            deps = headers + formatter(module.deps) + registry.hdrs,
             local_defines = options.keys()
         )
 
         all_module_rules.append(rule_name)
 
-    ddk_module(
-        name = "{}_spu-drivers".format(kernel_build),
-        kernel_build = kernel_build_label,
-        deps = all_module_rules
-    )
-
     copy_to_dist_dir(
         name = "{}_spu-drivers_dist".format(kernel_build),
-        data = [":{}_spu-drivers".format(kernel_build)],
+        data = all_module_rules,
         dist_dir = "../vendor/qcom/opensource/spu-drivers/out", ## TODO
         flat = True,
         wipe_dist_dir = False,
         allow_duplicate_filenames = False,
         mode_overrides = {"**/*": "644"},
-        log = "info",
+        #define_target_variant_modules = "info",
     )
 
 def define_consolidate_gki_modules(target, registry, modules, config_options = []):
