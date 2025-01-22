@@ -66,6 +66,15 @@ def define_target_variant_modules(target, variant, registry, modules, config_opt
         "//build/kernel/kleaf:socrepo_false": "//msm-kernel:{}".format(kernel_build),
     })
 
+    deps = select({
+        "//build/kernel/kleaf:socrepo_true": [
+            "//soc-repo:{}/kernel/trace/qcom_ipc_logging".format(kernel_build),
+            "//soc-repo:{}/drivers/remoteproc/rproc_qcom_common".format(kernel_build),
+            "//soc-repo:{}/drivers/remoteproc/qcom_spss".format(kernel_build),
+        ],
+        "//build/kernel/kleaf:socrepo_false": ["//msm-kernel:all_headers"],
+    })
+
     modules = [registry.get(module_name) for module_name in modules]
     options = _get_kernel_build_options(modules, config_options)
     formatter = lambda strs : [s.replace("%b", kernel_build).replace("%t", target) for s in strs]
@@ -80,7 +89,7 @@ def define_target_variant_modules(target, variant, registry, modules, config_opt
             kernel_build = kernel_build_label,
             srcs = srcs,
             out = "{}.ko".format(module.name),
-            deps = headers + formatter(module.deps) + registry.hdrs,
+            deps = headers + formatter(module.deps) + deps + registry.hdrs,
             local_defines = options.keys()
         )
 
