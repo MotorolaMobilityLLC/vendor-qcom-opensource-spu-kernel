@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /*
@@ -2233,8 +2233,7 @@ static int spcom_send_message(void *arg, void *buffer, bool is_modified)
 	struct spcom_ioctl_message *usr_msg = NULL;
 	struct spcom_ioctl_modified_message *usr_mod_msg = NULL;
 	const char *ch_name = NULL;
-	void *msg_buf = NULL;
-	void *tx_buf = NULL;
+	void *msg_buf = NULL, *tx_buf = NULL, *hdr_buf = NULL;
 	int tx_buf_size = 0;
 	uint32_t msg_buf_sz = 0;
 	uint32_t dma_info_array_sz = 0;
@@ -2331,7 +2330,8 @@ static int spcom_send_message(void *arg, void *buffer, bool is_modified)
 	hdr->txn_id = ch->txn_id;
 
 	/* Copy user buffer to tx */
-	memcpy(hdr->buf, msg_buf, msg_buf_sz);
+	hdr_buf = hdr->buf;
+	memcpy(hdr_buf, msg_buf, msg_buf_sz);
 
 	/* For modified message write the DMA buffer addresses to the user defined offset in the
 	 * message buffer
