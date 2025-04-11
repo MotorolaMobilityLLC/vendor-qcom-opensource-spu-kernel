@@ -940,8 +940,13 @@ static int modify_dma_buf_addr(struct spcom_channel *ch, void *buf,
 	for (i = 0 ; i < ARRAY_SIZE(ch->dmabuf_array) ; i++) {
 		if (ch->dmabuf_array[i].handle == dma_buf) {
 			if (ch->dmabuf_array[i].attach != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,2,0))
+				dma_buf_unmap_attachment_unlocked(ch->dmabuf_array[i].attach,
+						ch->dmabuf_array[i].sg, DMA_BIDIRECTIONAL);
+#else
 				dma_buf_unmap_attachment(ch->dmabuf_array[i].attach,
 						ch->dmabuf_array[i].sg, DMA_BIDIRECTIONAL);
+#endif
 				dma_buf_detach(dma_buf, ch->dmabuf_array[i].attach);
 			}
 			ch->dmabuf_array[i].attach = attach;
