@@ -4148,6 +4148,13 @@ static struct platform_driver spcom_driver = {
 
 module_platform_driver(spcom_driver);
 MODULE_SOFTDEP("pre: spss_utils");
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0))
+MODULE_IMPORT_NS("DMA_BUF");
+#else
 MODULE_IMPORT_NS(DMA_BUF);
+#endif
+
+
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Secure Processor Communication");
