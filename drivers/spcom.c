@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
  */
 
 /*
@@ -940,8 +940,13 @@ static int modify_dma_buf_addr(struct spcom_channel *ch, void *buf,
 	for (i = 0 ; i < ARRAY_SIZE(ch->dmabuf_array) ; i++) {
 		if (ch->dmabuf_array[i].handle == dma_buf) {
 			if (ch->dmabuf_array[i].attach != NULL) {
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6,2,0))
+				dma_buf_unmap_attachment_unlocked(ch->dmabuf_array[i].attach,
+						ch->dmabuf_array[i].sg, DMA_BIDIRECTIONAL);
+#else
 				dma_buf_unmap_attachment(ch->dmabuf_array[i].attach,
 						ch->dmabuf_array[i].sg, DMA_BIDIRECTIONAL);
+#endif
 				dma_buf_detach(dma_buf, ch->dmabuf_array[i].attach);
 			}
 			ch->dmabuf_array[i].attach = attach;
@@ -2233,8 +2238,7 @@ static int spcom_send_message(void *arg, void *buffer, bool is_modified)
 	struct spcom_ioctl_message *usr_msg = NULL;
 	struct spcom_ioctl_modified_message *usr_mod_msg = NULL;
 	const char *ch_name = NULL;
-	void *msg_buf = NULL;
-	void *tx_buf = NULL;
+	void *msg_buf = NULL, *tx_buf = NULL, *hdr_buf = NULL;
 	int tx_buf_size = 0;
 	uint32_t msg_buf_sz = 0;
 	uint32_t dma_info_array_sz = 0;
@@ -2331,7 +2335,8 @@ static int spcom_send_message(void *arg, void *buffer, bool is_modified)
 	hdr->txn_id = ch->txn_id;
 
 	/* Copy user buffer to tx */
-	memcpy(hdr->buf, msg_buf, msg_buf_sz);
+	hdr_buf = hdr->buf;
+	memcpy(hdr_buf, msg_buf, msg_buf_sz);
 
 	/* For modified message write the DMA buffer addresses to the user defined offset in the
 	 * message buffer
@@ -4143,6 +4148,13 @@ static struct platform_driver spcom_driver = {
 
 module_platform_driver(spcom_driver);
 MODULE_SOFTDEP("pre: spss_utils");
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 13, 0))
+MODULE_IMPORT_NS("DMA_BUF");
+#else
 MODULE_IMPORT_NS(DMA_BUF);
+#endif
+
+
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("Secure Processor Communication");
