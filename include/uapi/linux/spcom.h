@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only WITH Linux-syscall-note */
 /*
  * Copyright (c) 2015-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 
@@ -155,6 +155,11 @@ struct spcom_poll_param {
 	int retval;
 } __packed;
 
+struct spcom_get_crash_cnt_param {
+	/* output parameter */
+	__u32 crash_cnt;
+};
+
 #define SPCOM_IOCTL_MAGIC 'S'
 
 #define SPCOM_GET_IONFD _IOR(SPCOM_IOCTL_MAGIC, SPCOM_IONFD_CMD, \
@@ -191,7 +196,8 @@ enum spcom_ioctl_enum {
 	SPCOM_IOCTL_DMABUF_LOCK_CMD,
 	SPCOM_IOCTL_DMABUF_UNLOCK_CMD,
 	SPCOM_IOCTL_RESTART_SPU_CMD,
-	SPCOM_IOCTL_ENABLE_SSR_CMD
+	SPCOM_IOCTL_ENABLE_SSR_CMD,
+	SPCOM_IOCTL_GET_CRASH_CNT_CMD
 };
 
 /* SPCOM dma buffer info struct */
@@ -336,6 +342,13 @@ struct spcom_ioctl_dmabuf_lock {
 #define SPCOM_IOCTL_ENABLE_SSR _IO(          \
 		SPCOM_IOCTL_MAGIC,           \
 		SPCOM_IOCTL_ENABLE_SSR_CMD   \
+		)
+
+/* IOCTL to get crash count */
+#define SPCOM_IOCTL_GET_CRASH_CNT _IOR(      \
+		SPCOM_IOCTL_MAGIC,                   \
+		SPCOM_IOCTL_GET_CRASH_CNT_CMD,       \
+		struct spcom_get_crash_cnt_param     \
 		)
 
 #endif /* _UAPI_SPCOM_H_ */

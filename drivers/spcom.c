@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2015-2019, 2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022-2025 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  */
 
 /*
@@ -1316,6 +1316,27 @@ static int spcom_handle_unlock_ion_buf_command(struct spcom_channel *ch,
 static int spcom_handle_enable_ssr_command(void)
 {
 	spcom_pr_info("TBD: SSR is enabled after FOTA\n");
+	return 0;
+}
+
+/**
+ * spcom_handle_get_crash_cnt_command() - Handle user space request to
+ * get crash count.
+ *
+ * @param[out]  user_retval	Pointer to user space buffer to copy crash count to.
+ *
+ * Return: Zero on success, negative value on failure.
+ */
+static int spcom_handle_get_crash_cnt_command(uint32_t *user_retval)
+{
+	if (!spcom_dev->spss_rproc) {
+		spcom_pr_err("rproc is null\n");
+		return -ENODEV;
+	}
+	if (put_user(spcom_dev->spss_rproc->crash_cnt, user_retval)) {
+		spcom_pr_err("unable to copy crash count to user\n");
+		return -EFAULT;
+	}
 	return 0;
 }
 
@@ -3335,6 +3356,10 @@ static long spcom_device_ioctl(struct file *file, unsigned int cmd, unsigned lon
 
 	case SPCOM_IOCTL_ENABLE_SSR:
 		return spcom_handle_enable_ssr_command();
+
+	case SPCOM_IOCTL_GET_CRASH_CNT:
+		return spcom_handle_get_crash_cnt_command(
+			&((struct spcom_get_crash_cnt_param *)user_arg)->crash_cnt);
 
 	default:
 		spcom_pr_err("ioctl cmd[%d] is not supported\n", cmd);
